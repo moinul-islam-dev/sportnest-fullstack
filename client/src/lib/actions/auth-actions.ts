@@ -7,6 +7,14 @@ import { headers } from "next/headers";
 interface SignUpProps { name: string, email: string, password: string, image?: string }
 interface SignInProps { email: string, password: string }
 
+export async function getCurrentUser() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  return session?.user ?? null;
+}
+
 export const signUp = async ({ name, email, password, image }: SignUpProps) => {
 
     try {

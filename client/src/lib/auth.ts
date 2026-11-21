@@ -1,4 +1,5 @@
 import { betterAuth } from "better-auth";
+import { jwt } from "better-auth/plugins"
 import { MongoClient } from "mongodb";
 import { mongodbAdapter } from "@better-auth/mongo-adapter";
 import { nextCookies } from "better-auth/next-js";
@@ -24,7 +25,7 @@ const googleClientSECRET = process.env.GOOGLE_CLIENT_SECRET;
 
 export const auth = betterAuth({
 
-    baseURL: process.env.NEXT_PUBLIC_SERVER_BASE_URL || "http://localhost:5000", //different from docs
+    baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000", //different from docs
 
     database: mongodbAdapter(db, {
         client,
@@ -54,5 +55,16 @@ export const auth = betterAuth({
         )
     },
 
-    plugins: [nextCookies()],
+    plugins: [
+        jwt(),
+        nextCookies()
+    ],
+
+    session: {
+        cookieCache: {
+            enabled: true,
+            strategy: "jwt",
+            maxAge: 7 * 24 * 60 * 60,
+        }
+    }
 });

@@ -1,6 +1,6 @@
 import React, { cache } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import {
     ArrowLeft,
@@ -21,9 +21,10 @@ import {
 
 import { Facility } from "@/types/facility.type";
 import Image from "next/image";
-import headers from "next/headers";
+import { headers } from "next/headers";
 import FacilityBookingForm from "../_components/FacilityBookingForm";
 import { auth } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/actions/auth-actions";
 
 interface FacilityResponse {
     success: boolean;
@@ -86,14 +87,13 @@ const page = async ({ params }: PageProps<"/facilities/[id]">) => {
         notFound()
     }
 
-    const slots = facility.availableTimeSlots ?? [];
+    const slots = facility.availableTimeRanges ?? [];
 
+    const user = await getCurrentUser();
 
-    const session = await auth.api.getSession({
-        headers: await headers()
-    })
-
-
+    if(!user) {
+        redirect("/sign-in")
+    }
 
     return (
         <section className="min-h-screen bg-[#f8fafc] py-8 px-4 sm:px-6 lg:px-8">

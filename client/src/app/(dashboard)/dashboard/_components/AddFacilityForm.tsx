@@ -15,19 +15,43 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
+import { CurrentUser } from "@/types/user.type";
 
 
-export default function AddFacilityForm() {
+export default function AddFacilityForm({ user }: { user: CurrentUser }) {
+
+    const { id, email } = user;
+    const userEmail = email;
+
+    // _id: string;
+    // name: string;
+    // sportType: string;
+    // imageUrl: string;
+    // pricePerHour: number;
+    // location: string;
+    // capacity: number;
+    // availableTimeRanges: {
+    //     startTime: string;
+    //     endTime: string;
+    // } [];
+    // description: string;
 
     const [formData, setFormData] = useState({
+        userId: id,
+        userEmail: email,
         name: "",
         sportType: "",
         imageUrl: "",
         location: "",
         pricePerHour: "",
         capacity: "",
-        slotInput: "",
+        availableTimeRanges: [
+            {
+                startTime: "",
+                endTime: "",
+            },
+        ],
         description: "",
     });
 
@@ -42,18 +66,31 @@ export default function AddFacilityForm() {
     }
 
     const handleAddSlot = () => {
-        const trimmed = formData.slotInput.trim();
+        const { startTime, endTime } = formData.availableTimeRanges[
+            formData.availableTimeRanges.length - 1
+        ];
 
-        if (trimmed && !availableTimeSlots.includes(trimmed)) {
-            setAvailableTimeSlots((prev) => [...prev, trimmed]);
-
-            setFormData((prev) => ({
-                ...prev,
-                slotInput: ""
-            }))
+        if (!startTime || !endTime) {
+            toast.error("Please select both start and end time");
+            return;
         }
-    }
 
+        if (startTime >= endTime) {
+            toast.error("End time must be later than start time");
+            return;
+        }
+
+        setFormData((prev) => ({
+            ...prev,
+            availableTimeRanges: [
+                ...prev.availableTimeRanges,
+                {
+                    startTime: "",
+                    endTime: "",
+                },
+            ],
+        }));
+    };
     const handleRemoveSlot = (slotToRemove: string) => {
         setAvailableTimeSlots((prev) =>
             prev.filter((slot) => slot !== slotToRemove)
@@ -66,43 +103,116 @@ export default function AddFacilityForm() {
         router.refresh();
     };
 
+
     const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
-        const form = e.currentTarget;
-        console.log(form, "form");
+        try {
+            setIsLoading(true);
 
-        const { pricePerHour, capacity, slotInput, ...safeInputs } = formData;
-        const convertedPricePerHour = Number(pricePerHour);
-        const convertedCapacity = Number(capacity);
+            // Prepare facility data
+            const { pricePerHour, capacity, availableTimeRanges, ...safeInputs } = formData;
 
-        const facilityData = {
-            ...safeInputs,
-            pricePerHour: convertedPricePerHour,
-            capacity: convertedCapacity,
-            availableTimeSlots,
-        };
+            // Remove empty ranges
+            const validTimeRanges = availableTimeRanges.filter(
+                (range) => range.startTime && range.endTime
+            );
 
-        const result = await fetch(
-            `${process.env.NEXT_PUBLIC_SERVER_BASE_URL}/facilities`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(facilityData)
-        })
+            const facilityData = {
+                ...safeInputs,
+                pricePerHour: Number(pricePerHour),
+                capacity: Number(capacity),
+                availableTimeRanges: validTimeRanges,
+            };
 
-        const data = await result.json();
+            // Basic validation
+            if (validTimeRanges.length === 0) {
+                toast.error("Please add at least one available time range");
+                return;
+            }
 
-        if(data.success) {
-            toast.success("Facility added successfully!")
+            // Validate time ranges
+            const hasInvalidRange = validTimeRanges.some(
+                (range) => range.startTime >= range.endTime
+            );
+
+            if (hasInvalidRange) {
+                toast.error("End time must be later than start time");
+                return;
+            }
+
+            // Validate overlapping ranges
+            const sortedRanges = [...validTimeRanges].sort(
+                (a, b) => a.startTime.localeCompare(b.startTime)
+            );
+
+            const hasOverlappingRanges = sortedRanges.some(
+                (range, index) =>
+                    index > 0 &&
+                    range.startTime < sortedRanges[index - 1].endTime
+            );
+
+            if (hasOverlappingRanges) {
+                toast.error("Available time ranges cannot overlap");
+                return;
+            }
+
+            if (facilityData.pricePerHour <= 0 || facilityData.capacity < 1) {
+                toast.error("Please provide valid price and capacity");
+                return;
+            }
+
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_SERVER_BASE_URL}/facilities`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(facilityData),
+                }
+            );
+
+            const result = await res.json();
+
+            if (!res.ok) {
+                throw new Error(result.message || "Failed to create facility");
+            }
+
+            toast.success("Facility added successfully!");
+
+            // Reset form
+            setFormData({
+                userId: id,
+                userEmail: email,
+                name: "",
+                sportType: "",
+                imageUrl: "",
+                location: "",
+                pricePerHour: "",
+                capacity: "",
+                availableTimeRanges: [
+                    {
+                        startTime: "",
+                        endTime: "",
+                    },
+                ],
+                description: "",
+            });
+
+            handleSuccess();
+
+        } catch (error) {
+            console.error("Error creating facility:", error);
+
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : "Something went wrong"
+            );
+        } finally {
+            setIsLoading(false);
         }
-
-        console.log(data);
-
-        console.log(facilityData)
-
-
     };
 
     return (
@@ -249,27 +359,78 @@ export default function AddFacilityForm() {
                         >
                             AVAILABLE TIME SLOTS *
                         </Label>
-                        <div className="flex items-center gap-2">
-                            <Input
-                                id="timeSlots"
-                                placeholder="e.g. 08:00 AM - 09:00 AM"
-                                value={formData.slotInput}
-                                onChange={(e) => handleChange("slotInput", e.target.value)}
-                                onKeyDown={(e) => {
-                                    if (e.key === "Enter") {
-                                        e.preventDefault();
-                                        handleAddSlot();
-                                    }
-                                }}
-                                className="w-full h-10 rounded-lg border-slate-200 placeholder:text-slate-400"
-                            />
+                        <div className="space-y-3">
+                            {formData.availableTimeRanges.map((range, index) => (
+                                <div key={index} className="flex items-center gap-2">
+                                    <Input
+                                        type="time"
+                                        value={range.startTime}
+                                        onChange={(e) => {
+                                            const updatedRanges = [...formData.availableTimeRanges];
+
+                                            updatedRanges[index] = {
+                                                ...updatedRanges[index],
+                                                startTime: e.target.value,
+                                            };
+
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                availableTimeRanges: updatedRanges,
+                                            }));
+                                        }}
+                                        className="w-full h-10 rounded-lg border-slate-200"
+                                    />
+
+                                    <span className="text-slate-500">to</span>
+
+                                    <Input
+                                        type="time"
+                                        value={range.endTime}
+                                        onChange={(e) => {
+                                            const updatedRanges = [...formData.availableTimeRanges];
+
+                                            updatedRanges[index] = {
+                                                ...updatedRanges[index],
+                                                endTime: e.target.value,
+                                            };
+
+                                            setFormData((prev) => ({
+                                                ...prev,
+                                                availableTimeRanges: updatedRanges,
+                                            }));
+                                        }}
+                                        className="w-full h-10 rounded-lg border-slate-200"
+                                    />
+
+                                    {formData.availableTimeRanges.length > 1 && (
+                                        <Button
+                                            type="button"
+                                            onClick={() => {
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    availableTimeRanges: prev.availableTimeRanges.filter(
+                                                        (_, i) => i !== index
+                                                    ),
+                                                }));
+                                            }}
+                                            variant="destructive"
+                                            className="h-10 w-10 shrink-0 p-0"
+                                            aria-label="Remove time range"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            ))}
+
                             <Button
                                 type="button"
                                 onClick={handleAddSlot}
-                                className="h-10 w-11 shrink-0 rounded-lg bg-[#16a34a] hover:bg-[#15803d] text-white p-0"
-                                aria-label="Add time slot"
+                                variant="outline"
+                                className="w-full"
                             >
-                                <PlusCircle className="h-5 w-5" />
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Add Time Range
                             </Button>
                         </div>
 

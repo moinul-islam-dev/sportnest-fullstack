@@ -1,7 +1,14 @@
-import React from "react";
+import { getCurrentUser } from "@/lib/actions/auth-actions";
 import AddFacilityForm from "../_components/AddFacilityForm";
+import { redirect } from "next/navigation";
 
-export default function AddFacilityPage() {
+const AddFacilityPage = async () => {
+
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect("/login");
+  }
 
 
   return (
@@ -17,7 +24,9 @@ export default function AddFacilityPage() {
       </div>
 
       {/* Separated Form Component */}
-      <AddFacilityForm />
+      <AddFacilityForm user={user} />
     </section>
   );
 }
+
+export default AddFacilityPage;

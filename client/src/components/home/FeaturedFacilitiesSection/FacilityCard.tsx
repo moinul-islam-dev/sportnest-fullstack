@@ -83,7 +83,7 @@ const FacilityCard = ({ facility }: FacilityCardProps) => {
           <div className="flex items-center gap-2">
             <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             <span>
-              {facility.availableTimeSlots.length} slots available
+              {facility.availableTimeRanges.length} slots available
             </span>
           </div>
 

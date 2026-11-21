@@ -110,21 +110,21 @@ export function DesktopUserMenu({ user }: DesktopUserMenuProps) {
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem className="py-3">
-                        <Link href="/bookings">
+                        <Link href="/dashboard/my-bookings">
                             <CalendarDays className="size-4" />
                             My Bookings
                         </Link>
                     </DropdownMenuItem>
 
                     <DropdownMenuItem className="py-3">
-                        <Link href="/facilities/new">
+                        <Link href="/dashboard/add-facility">
                             <PlusCircle className="size-4" />
                             Add Facility
                         </Link>
                     </DropdownMenuItem>
 
                     <DropdownMenuItem className="py-3">
-                        <Link href="/facilities/manage">
+                        <Link href="/dashboard/manage-facilities">
                             <Building2 className="size-4" />
                             Manage Facilities
                         </Link>

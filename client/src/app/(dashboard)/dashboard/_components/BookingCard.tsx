@@ -2,138 +2,166 @@
 
 import React from "react";
 import {
-  MapPin,
-  Calendar,
-  Clock,
-  DollarSign,
-  Trash2,
-  Loader2,
+    CalendarDays,
+    Clock3,
+    Receipt,
+    Trash2,
+    Loader2,
+    Building2,
+    UserRound,
+    Mail,
 } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
-export interface BookingItem {
-  id: string;
-  facilityName: string;
-  facilityImage: string;
-  location: string;
-  date: string;
-  timeSlot: string;
-  duration: string;
-  totalPrice: number;
-  status: "PENDING" | "CONFIRMED" | "CANCELLED" | string;
-}
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Booking } from "@/types/booking.type";
 
 interface BookingCardProps {
-  booking: BookingItem;
-  onCancel?: (id: string) => void;
-  isCancelling?: boolean;
+    booking: Booking;
+    onCancel?: (id: string) => void;
+    isCancelling?: boolean;
 }
 
-const getStatusBadgeStyle = (status: string) => {
-  switch (status.toUpperCase()) {
-    case "PENDING":
-      return "bg-amber-100/90 text-amber-800 border-amber-200/80";
-    case "CONFIRMED":
-      return "bg-emerald-100/90 text-emerald-800 border-emerald-200/80";
-    case "CANCELLED":
-      return "bg-rose-100/90 text-rose-700 border-rose-200/80";
-    default:
-      return "bg-zinc-100 text-zinc-700 border-zinc-200";
-  }
-};
-
 const BookingCard = ({
-  booking,
-  onCancel,
-  isCancelling = false,
+    booking,
+    onCancel,
+    isCancelling = false,
 }: BookingCardProps) => {
-  const isCancelled = booking.status.toUpperCase() === "CANCELLED";
+    const formattedDate = new Date(
+        `${booking.bookingDate}T00:00:00`
+    ).toLocaleDateString("en-US", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
 
-  return (
-    <Card className="rounded-2xl border border-zinc-200/80 bg-white shadow-xs transition-all duration-200 hover:shadow-md py-0">
-      <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {/* Left & Middle: Facility Image + Details */}
-        <div className="flex items-start sm:items-center gap-4">
-          {/* Thumbnail */}
-          <div className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-xl overflow-hidden bg-zinc-100 shrink-0">
-            <img
-              src={booking.facilityImage}
-              alt={booking.facilityName}
-              className="h-full w-full object-cover"
-            />
-          </div>
+    return (
+        <Card className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:border-emerald-200 hover:shadow-md">
+            <CardContent className="p-0">
 
-          {/* Info */}
-          <div className="space-y-2">
-            {/* Title & Status Badge */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <h3 className="text-sm sm:text-base font-bold text-zinc-900">
-                {booking.facilityName}
-              </h3>
-              <Badge
-                variant="outline"
-                className={cn(
-                  "rounded-md px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase",
-                  getStatusBadgeStyle(booking.status)
-                )}
-              >
-                {booking.status}
-              </Badge>
-            </div>
+                {/* Header */}
+                <div className="flex items-center justify-between gap-3 border-b border-slate-100 bg-slate-50/70 px-4 py-3 sm:px-5">
 
-            {/* Meta Row: Location, Date, Time, Price */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-zinc-500">
-              <div className="flex items-center gap-1.5">
-                <MapPin className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>{booking.location}</span>
-              </div>
+                    <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                            <Building2 className="size-7" />
+                        </div>
 
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>{booking.date}</span>
-              </div>
+                        <div className="min-w-0">
+                            <h3 className="text-sm font-bold text-slate-900">
+                                Facility Booking
+                            </h3>
 
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>
-                  {booking.timeSlot} ({booking.duration})
-                </span>
-              </div>
+                            <p className="text-xs text-slate-500">
+                                ID: #{booking._id.slice(-8)}
+                            </p>
+                        </div>
+                    </div>
 
-              <div className="flex items-center gap-0.5 font-bold text-zinc-900">
-                <DollarSign className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                <span>{booking.totalPrice}</span>
-              </div>
-            </div>
-          </div>
-        </div>
+                    <span className="shrink-0 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-bold tracking-wider text-emerald-700">
+                        BOOKED
+                    </span>
+                </div>
 
-        {/* Right: Cancel Action */}
-        {!isCancelled && (
-          <div className="self-end sm:self-center shrink-0">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={isCancelling}
-              onClick={() => onCancel?.(booking.id)}
-              className="text-rose-500 hover:text-rose-600 hover:bg-rose-50/80 font-medium text-xs gap-1.5 px-3"
-            >
-              {isCancelling ? (
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              ) : (
-                <Trash2 className="w-3.5 h-3.5" />
-              )}
-              <span>Cancel</span>
-            </Button>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+                {/* Main Content */}
+                <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1fr_175px]">
+
+                    {/* Booking Details */}
+                    <div className="min-w-0 space-y-3">
+
+                       
+
+                        {/* Booking Information */}
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+
+                            <div className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/70 p-3">
+                                <CalendarDays className="size-8 shrink-0 text-emerald-600" />
+
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-medium text-slate-400">
+                                        BOOKING DATE
+                                    </p>
+
+                                    <p className="mt-0.5 text-xs font-bold text-slate-800">
+                                        {formattedDate}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/70 p-3">
+                                <Clock3 className="size-8 shrink-0 text-emerald-600" />
+
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-medium text-slate-400">
+                                        TIME SLOT
+                                    </p>
+
+                                    <p className="mt-0.5 text-xs font-bold text-slate-800">
+                                        {booking.timeSlot}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 rounded-lg border border-slate-100 bg-slate-50/70 p-3">
+                                <Receipt className="size-8 shrink-0 text-emerald-600" />
+
+                                <div className="min-w-0">
+                                    <p className="text-[10px] font-medium text-slate-400">
+                                        DURATION
+                                    </p>
+
+                                    <p className="mt-0.5 text-xs font-bold text-slate-800">
+                                        {booking.duration} Hours
+                                    </p>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        
+                    </div>
+
+                    {/* Price & Action */}
+                    <div className="flex flex-row items-center justify-between gap-3 rounded-lg bg-emerald-50/70 p-3 lg:flex-col lg:items-stretch lg:justify-center">
+
+                        <div>
+                            <p className="text-xs font-medium text-slate-500">
+                                Total Amount
+                            </p>
+
+                            <p className="mt-0.5 text-2xl font-extrabold tracking-tight text-emerald-700">
+                                ৳{booking.totalPrice.toLocaleString("en-BD")}
+                            </p>
+
+                            <p className="text-[10px] text-slate-500">
+                                {booking.duration} hours booking
+                            </p>
+                        </div>
+
+                        {onCancel && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={isCancelling}
+                                onClick={() => onCancel(booking._id)}
+                                className="h-9 shrink-0 border-rose-200 bg-white text-xs text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                            >
+                                {isCancelling ? (
+                                    <Loader2 className="mr-1.5 size-4 animate-spin" />
+                                ) : (
+                                    <Trash2 className="mr-1.5 size-4" />
+                                )}
+
+                                {isCancelling ? "Cancelling..." : "Cancel Booking"}
+                            </Button>
+                        )}
+
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
 };
 
 export default BookingCard;
